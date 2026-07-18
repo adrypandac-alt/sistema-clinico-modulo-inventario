@@ -1,0 +1,17 @@
+target/
+*.log
+.idea/
+.vscode/
+.kiro/
+ejecutable-payara/*.log
+.tools/
+.mysql-local/
+.mysql-project-data/
+mysql-project.ini
+outputs/
+copia seguridad/
+ejecutable-payara/payara-micro.jar
+ejecutable-payara/payara-micro-config/
+ejecutable-payara/tmp/
+*.out.log
+*.err.log
