@@ -1,0 +1,9 @@
+Sistema Clinico - Ejecucion con Payara Micro
+
+1. Ejecute el archivo ejecutar-payara.bat ubicado en la carpeta principal.
+2. Ejecute mysql-configuracion.sql en MySQL si la base todavia no existe.
+3. Espere hasta que Payara muestre que la aplicacion fue desplegada.
+4. Abra http://localhost:8081/SistemaClinico/
+5. Para detener el servidor presione Ctrl+C en la ventana.
+
+El proyecto utiliza Java 17, Jakarta EE 10 y Payara Micro 6.2025.11.

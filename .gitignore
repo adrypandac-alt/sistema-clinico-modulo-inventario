@@ -15,3 +15,6 @@ ejecutable-payara/payara-micro-config/
 ejecutable-payara/tmp/
 *.out.log
 *.err.log
+Entregables/*
+!Entregables/SQL/
+!Entregables/SQL/**
