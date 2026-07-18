@@ -10,6 +10,7 @@ import com.nexodist.model.Venta;
 import com.nexodist.model.VentaItem;
 import com.nexodist.service.DashboardService;
 import com.nexodist.service.VentaService;
+import com.nexodist.util.RequestValidator;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,6 +20,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/venta")
+/**
+ * En este controlador gestiono el carrito y el formulario de venta clínica.
+ *
+ * Valido identificadores, cantidades y datos del cliente antes de delegar la
+ * actualización de inventario a VentaService. Si fallo, no registro la venta
+ * ni descuento existencias de forma controlada.
+ */
 public class VentaServlet extends HttpServlet {
 
     @Override
@@ -52,8 +60,14 @@ public class VentaServlet extends HttpServlet {
         List<VentaItem> carrito = obtenerCarrito(session);
 
         if ("agregar".equals(accion)) {
-            int productoId = Integer.parseInt(req.getParameter("productoId"));
-            int cantidad = Integer.parseInt(req.getParameter("cantidad"));
+            int productoId;
+            int cantidad;
+            try {
+                productoId = RequestValidator.enteroPositivo(req.getParameter("productoId"), "El producto");
+                cantidad = RequestValidator.enteroPositivo(req.getParameter("cantidad"), "La cantidad");
+            } catch (IllegalArgumentException e) {
+                resp.sendRedirect("venta?error=cantidad"); return;
+            }
             List<Producto> productos = (List<Producto>) getServletContext().getAttribute("productos");
             Producto p = null;
             for (Producto prod : productos) {
@@ -78,7 +92,9 @@ public class VentaServlet extends HttpServlet {
         }
 
         if ("eliminar".equals(accion)) {
-            int productoId = Integer.parseInt(req.getParameter("productoId"));
+            int productoId;
+            try { productoId = RequestValidator.enteroPositivo(req.getParameter("productoId"), "El producto"); }
+            catch (IllegalArgumentException e) { resp.sendRedirect("venta?error=producto"); return; }
             carrito.removeIf(i -> i.getProductoId() == productoId);
             session.setAttribute("carritoVenta", carrito);
             resp.sendRedirect("venta");
@@ -86,8 +102,14 @@ public class VentaServlet extends HttpServlet {
         }
 
         if ("actualizar".equals(accion)) {
-            int productoId = Integer.parseInt(req.getParameter("productoId"));
-            int cantidad = Integer.parseInt(req.getParameter("cantidad"));
+            int productoId;
+            int cantidad;
+            try {
+                productoId = RequestValidator.enteroPositivo(req.getParameter("productoId"), "El producto");
+                cantidad = RequestValidator.enteroPositivo(req.getParameter("cantidad"), "La cantidad");
+            } catch (IllegalArgumentException e) {
+                resp.sendRedirect("venta?error=cantidad"); return;
+            }
             for (VentaItem item : carrito) {
                 if (item.getProductoId() == productoId) {
                     item.setCantidad(Math.max(1, cantidad));
@@ -152,12 +174,12 @@ public class VentaServlet extends HttpServlet {
 
     private List<String> validarCliente(Venta datos) {
         List<String> errores = new ArrayList<>();
-        if (datos.getClienteNombre() == null || datos.getClienteNombre().trim().isEmpty()) {
-            errores.add("El nombre del cliente es obligatorio.");
-        }
-        if (datos.getClienteRuc() == null || datos.getClienteRuc().trim().isEmpty()) {
-            errores.add("El RUC o cédula es obligatorio.");
-        }
+        try { datos.setClienteNombre(RequestValidator.nombre(datos.getClienteNombre(), "El nombre del cliente", 120)); }
+        catch (IllegalArgumentException e) { errores.add(e.getMessage()); }
+        try { datos.setClienteRuc(RequestValidator.documento(datos.getClienteRuc(), "El RUC o cédula")); }
+        catch (IllegalArgumentException e) { errores.add(e.getMessage()); }
+        try { datos.setClienteCorreo(RequestValidator.correoOpcional(datos.getClienteCorreo())); }
+        catch (IllegalArgumentException e) { errores.add(e.getMessage()); }
         return errores;
     }
 

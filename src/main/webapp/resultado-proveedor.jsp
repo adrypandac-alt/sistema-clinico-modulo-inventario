@@ -7,9 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proveedor registrado</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/estilos.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/accessibility.css">
+    <script src="${pageContext.request.contextPath}/js/accessibility.js"></script>
 </head>
 <body>
-<main class="contenido">
+<a class="sc-skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+<main class="contenido" id="contenido-principal" tabindex="-1">
     <article class="tarjeta">
         <p class="aviso">Proveedor registrado correctamente con HTTP 201.</p>
         <h1><c:out value="${proveedor.nombre}"/></h1>

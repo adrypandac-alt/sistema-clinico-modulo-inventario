@@ -32,6 +32,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventario médico - Sistema Clínico</title>
     <link rel="stylesheet" href="css/stockcontrol.css">
+    <link rel="stylesheet" href="css/accessibility.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="sc-body">
@@ -125,10 +126,12 @@
                     <td><%= p.getLote() %></td>
                     <td>
                         <span class="sc-expiry-badge <%= p.isCaducado() ? "expired" : (p.isProximoCaducar() ? "soon" : "ok") %>">
-                            <%= p.getFechaCaducidad() == null || p.getFechaCaducidad().isBlank() ? "Sin fecha" : p.getFechaCaducidad() %>
+                            <%= p.isCaducado() ? "✖ Caducado: " : (p.isProximoCaducar() ? "▲ Próximo: " : "● Vigente: ") %><%= p.getFechaCaducidad() == null || p.getFechaCaducidad().isBlank() ? "Sin fecha" : p.getFechaCaducidad() %>
                         </span>
                     </td>
-                    <td class="<%= bajo ? "sc-stock-warn" : "" %>"><%= p.getStock() %></td>
+                    <td class="<%= bajo ? "sc-stock-warn" : "" %>"><%= p.getStock() %>
+                        <span class="sc-sr-only"><%= p.esStockCritico() ? "✖ Stock crítico" : (p.esStockBajo() ? "▲ Stock bajo" : "● Stock normal") %></span>
+                    </td>
                     <td><%= p.getStockMinimo() %></td>
                     <td>$<%= String.format(Locale.US, "%,.0f", p.getPrecio()) %></td>
                     <td>
@@ -170,11 +173,11 @@
             <div class="sc-form-row-2">
                 <div class="sc-form-group">
                     <label>Nombre del producto</label>
-                    <input type="text" name="nombre" required placeholder="Ej. Paracetamol 500 mg">
+                    <input type="text" name="nombre" maxlength="120" required placeholder="Ej. Paracetamol 500 mg">
                 </div>
                 <div class="sc-form-group">
                     <label>SKU <span class="sc-field-hint">(único)</span></label>
-                    <input type="text" name="sku" placeholder="MED-099">
+                    <input type="text" name="sku" maxlength="50" placeholder="MED-099">
                 </div>
             </div>
             <div class="sc-form-row-2">
@@ -190,7 +193,7 @@
                 </div>
                 <div class="sc-form-group">
                     <label>Proveedor</label>
-                    <input type="text" name="proveedor" required placeholder="Nombre del proveedor">
+                    <input type="text" name="proveedor" maxlength="120" required placeholder="Nombre del proveedor">
                 </div>
             </div>
 
@@ -217,7 +220,7 @@
             <div class="sc-form-row-2">
                 <div class="sc-form-group">
                     <label>Número de lote</label>
-                    <input type="text" name="lote" placeholder="MED-2601" required>
+                    <input type="text" name="lote" maxlength="60" placeholder="MED-2601" required>
                 </div>
                 <div class="sc-form-group">
                     <label>Fecha de caducidad</label>
@@ -229,7 +232,7 @@
             </div>
             <div class="sc-form-group">
                 <label>Registro sanitario</label>
-                <input type="text" name="registroSanitario" placeholder="RS-EC-2026-001" required>
+                <input type="text" name="registroSanitario" maxlength="250" placeholder="RS-EC-2026-001" required>
             </div>
 
             <div class="sc-form-actions">
@@ -247,11 +250,11 @@
             <input type="hidden" name="accion" value="crearCategoria">
             <div class="sc-form-group">
                 <label>Nombre de categoría</label>
-                <input type="text" name="nombreCategoria" required>
+                <input type="text" name="nombreCategoria" maxlength="100" required>
             </div>
             <div class="sc-form-group">
                 <label>Descripción opcional</label>
-                <textarea name="descripcionCategoria" rows="3" placeholder="Uso interno de la categoría"></textarea>
+                <textarea name="descripcionCategoria" rows="3" maxlength="200" placeholder="Uso interno de la categoría"></textarea>
             </div>
             <div class="sc-form-actions">
                 <button type="submit" class="sc-btn-primary">Guardar</button>

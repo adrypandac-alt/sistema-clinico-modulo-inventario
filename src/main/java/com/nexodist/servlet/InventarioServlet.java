@@ -8,6 +8,7 @@ import com.nexodist.model.Producto;
 import com.nexodist.model.Usuario;
 import com.nexodist.service.DashboardService;
 import com.nexodist.storage.DatosStorage;
+import com.nexodist.util.RequestValidator;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,6 +18,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/inventario")
+/**
+ * En este controlador recibo las consultas y formularios de productos.
+ *
+ * Verifico sesión, permisos, campos obligatorios, rangos, fechas y duplicados
+ * antes de actualizar el contexto y solicitar persistencia a DatosStorage. Si
+ * fallo, no se pueden consultar, registrar, modificar o eliminar productos.
+ */
 public class InventarioServlet extends HttpServlet {
 
     @Override
@@ -87,14 +95,10 @@ public class InventarioServlet extends HttpServlet {
         int stock;
         int stockMinimo;
         try {
-            precio = Double.parseDouble(req.getParameter("precio"));
-            stock = Integer.parseInt(req.getParameter("stock"));
-            stockMinimo = Integer.parseInt(req.getParameter("stockMinimo"));
-            if (precio < 0 || stock < 0 || stockMinimo < 1) {
-                resp.sendRedirect("inventario?error=valoresNegativos");
-                return;
-            }
-        } catch (NumberFormatException e) {
+            precio = RequestValidator.decimalNoNegativo(req.getParameter("precio"), "El precio").doubleValue();
+            stock = RequestValidator.enteroNoNegativo(req.getParameter("stock"), "El stock");
+            stockMinimo = RequestValidator.enteroPositivo(req.getParameter("stockMinimo"), "El stock mínimo");
+        } catch (IllegalArgumentException | ArithmeticException e) {
             resp.sendRedirect("inventario?error=formatoNumerico");
             return;
         }
@@ -123,7 +127,9 @@ public class InventarioServlet extends HttpServlet {
             }
 
             if ("editar".equals(accion)) {
-                int productoId = Integer.parseInt(req.getParameter("id"));
+                int productoId;
+                try { productoId = RequestValidator.enteroPositivo(req.getParameter("id"), "El producto"); }
+                catch (IllegalArgumentException e) { resp.sendRedirect("inventario?error=producto"); return; }
                 Producto producto = buscarProducto(productos, productoId);
                 if (producto == null) {
                     resp.sendRedirect("inventario?error=producto");
@@ -226,7 +232,9 @@ public class InventarioServlet extends HttpServlet {
 
     @SuppressWarnings("unchecked")
     private void eliminarProducto(HttpServletRequest req, HttpServletResponse resp, Usuario usuario) throws IOException {
-        int productoId = Integer.parseInt(req.getParameter("id"));
+        int productoId;
+        try { productoId = RequestValidator.enteroPositivo(req.getParameter("id"), "El producto"); }
+        catch (IllegalArgumentException e) { resp.sendRedirect("inventario?error=producto"); return; }
         synchronized (getServletContext()) {
             List<Producto> productos = (List<Producto>) getServletContext().getAttribute("productos");
             Producto producto = buscarProducto(productos, productoId);

@@ -22,7 +22,7 @@ public final class PasswordUtil {
     private static final String PREFIJO_BCRYPT = "$2";
 
     /** Longitud mínima de contraseña aceptada por la aplicación. */
-    public static final int LONGITUD_MINIMA = 6;
+    public static final int LONGITUD_MINIMA = 8;
 
     /** Cantidad máxima de contraseñas anteriores que no se pueden reutilizar. */
     public static final int MAX_HISTORIAL = 5;

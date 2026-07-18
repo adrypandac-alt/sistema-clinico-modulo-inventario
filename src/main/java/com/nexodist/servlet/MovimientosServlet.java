@@ -109,10 +109,20 @@ public class MovimientosServlet extends HttpServlet {
 
         req.setCharacterEncoding("UTF-8");
 
-        int productoId = Integer.parseInt(req.getParameter("productoId"));
+        int productoId;
+        int cantidad;
         String tipo = req.getParameter("tipo");
-        int cantidad = Integer.parseInt(req.getParameter("cantidad"));
         String motivo = req.getParameter("motivo");
+        try {
+            productoId = Integer.parseInt(req.getParameter("productoId"));
+            cantidad = Integer.parseInt(req.getParameter("cantidad"));
+        } catch (NumberFormatException e) {
+            resp.sendRedirect("movimientos?error=1"); return;
+        }
+        if (productoId <= 0 || cantidad <= 0 || tipo == null || tipo.isBlank()
+                || motivo == null || motivo.isBlank() || motivo.trim().length() > 250) {
+            resp.sendRedirect("movimientos?error=1"); return;
+        }
 
         synchronized (getServletContext()) {
             Movimiento mov = DashboardService.registrarMovimiento(

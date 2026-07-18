@@ -75,17 +75,19 @@ CREATE TABLE usuario (
   id_rol INT NOT NULL,
   id_tipo_usuario INT NULL,
   identificacion VARCHAR(20) NULL,
-  nombres VARCHAR(120) NULL,
-  nombre VARCHAR(120) NOT NULL,
+  nombres VARCHAR(512) NULL,
+  nombre VARCHAR(512) NOT NULL,
   password VARCHAR(255) NOT NULL,
-  email VARCHAR(120) NOT NULL,
-  telefono VARCHAR(25),
+  email VARCHAR(512) NOT NULL,
+  telefono VARCHAR(255),
   paneles_permitidos VARCHAR(250),
   fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   activo BOOLEAN NOT NULL DEFAULT TRUE,
   CONSTRAINT pk_usuario PRIMARY KEY (id_usuario),
   CONSTRAINT uq_usuario_identificacion UNIQUE (identificacion),
   CONSTRAINT uq_usuario_email UNIQUE (email),
+  CONSTRAINT chk_usuario_nombre CHECK (CHAR_LENGTH(TRIM(nombre)) > 0),
+  CONSTRAINT chk_usuario_password CHECK (CHAR_LENGTH(password) >= 60),
   CONSTRAINT fk_usuario_rol
     FOREIGN KEY (id_rol) REFERENCES rol (id_rol)
     ON UPDATE CASCADE
@@ -104,7 +106,7 @@ CREATE TABLE usuario (
 -- Permite detectar y bloquear ataques de fuerza bruta por IP o correo.
 CREATE TABLE intentos_login (
   id_intento    INT AUTO_INCREMENT,
-  correo        VARCHAR(120)         NOT NULL,
+  correo        VARCHAR(512)         NOT NULL,
   ip            VARCHAR(45)          NOT NULL,
   fecha         TIMESTAMP            NOT NULL DEFAULT CURRENT_TIMESTAMP,
   exitoso       BOOLEAN              NOT NULL DEFAULT FALSE,
@@ -179,6 +181,7 @@ CREATE TABLE producto (
   CONSTRAINT pk_producto PRIMARY KEY (id_producto),
   CONSTRAINT uq_producto_sku UNIQUE (sku),
   CONSTRAINT uq_producto_codigo UNIQUE (codigo),
+  CONSTRAINT chk_producto_precio_compra CHECK (precio_compra >= 0),
   CONSTRAINT chk_producto_precio_venta CHECK (precio_venta >= 0),
   CONSTRAINT chk_producto_stock_actual CHECK (stock_actual >= 0),
   CONSTRAINT chk_producto_stock_minimo CHECK (stock_minimo >= 0),
@@ -294,12 +297,13 @@ CREATE TABLE pedido (
   numero_factura VARCHAR(60),
   rol_usuario VARCHAR(80),
   fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  estado VARCHAR(40),
+  estado VARCHAR(40) NOT NULL DEFAULT 'PENDIENTE',
   clinica VARCHAR(150),
   solicitante VARCHAR(120),
   despachado_por VARCHAR(120),
   entregado_a VARCHAR(120),
   CONSTRAINT pk_pedido PRIMARY KEY (id_pedido),
+  CONSTRAINT chk_pedido_estado CHECK (UPPER(estado) IN ('PENDIENTE','PREPARANDO','DESPACHADO','CANCELADO','CONFIRMADO')),
   CONSTRAINT fk_pedido_usuario
     FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario)
     ON UPDATE CASCADE
@@ -348,6 +352,7 @@ CREATE TABLE lote_producto (
   CONSTRAINT pk_lote_producto PRIMARY KEY (id_lote),
   CONSTRAINT uq_lote_producto UNIQUE (id_producto, numero_lote),
   CONSTRAINT chk_lote_producto_cantidad CHECK (cantidad_lote >= 0),
+  CONSTRAINT chk_lote_producto_existencia CHECK (cantidad >= 0),
   CONSTRAINT fk_lote_producto_producto
     FOREIGN KEY (id_producto) REFERENCES producto (id_producto)
     ON UPDATE CASCADE
@@ -366,8 +371,9 @@ CREATE TABLE despacho (
   id_despacho INT AUTO_INCREMENT,
   id_usuario INT NOT NULL,
   fecha_despacho DATE,
-  estado VARCHAR(40),
+  estado VARCHAR(40) NOT NULL DEFAULT 'PENDIENTE',
   CONSTRAINT pk_despacho PRIMARY KEY (id_despacho),
+  CONSTRAINT chk_despacho_estado CHECK (UPPER(estado) IN ('PENDIENTE','PREPARANDO','DESPACHADO','CANCELADO')),
   CONSTRAINT fk_despacho_usuario
     FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario)
     ON UPDATE CASCADE
@@ -429,6 +435,7 @@ CREATE TABLE movimiento_detalle (
   precio_unitario DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   CONSTRAINT pk_movimiento_detalle PRIMARY KEY (id_movimiento_detalle),
   CONSTRAINT chk_movimiento_detalle_cantidad CHECK (cantidad > 0),
+  CONSTRAINT chk_movimiento_detalle_precio CHECK (precio_unitario >= 0),
   CONSTRAINT fk_movimiento_detalle_movimiento
     FOREIGN KEY (id_movimiento) REFERENCES movimiento (id_movimiento)
     ON UPDATE CASCADE
@@ -482,11 +489,8 @@ INSERT INTO tipo_telefono (nombre) VALUES
 ('Whatsapp'),
 ('Oficina');
 
-INSERT INTO usuario
-  (id_rol, id_tipo_usuario, identificacion, nombres, nombre, password, email)
-VALUES
-  (1, 1, '9999999999', 'Administrador General', 'Administrador General', 'admin123', 'admin@sistema-clinico.local'),
-  (2, 1, '0999999998', 'Operativo Inventario', 'Operativo Inventario', 'operativo123', 'operativo@sistema-clinico.local');
+-- Los usuarios iniciales son creados por la aplicación para que sus datos
+-- personales queden cifrados y sus contraseñas se almacenen con BCrypt.
 
 INSERT INTO bodega (nombre, id_ciudad) VALUES
 ('Bodega principal', 1);

@@ -22,9 +22,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Clínico</title>
     <link rel="stylesheet" href="css/estilos.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <script src="js/accessibility.js"></script>
 </head>
 <body>
-<main class="login-page">
+<a class="sc-skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+<main class="login-page" id="contenido-principal" tabindex="-1">
     <section class="brand-panel">
         <div class="brand-top">
             <span class="logo">SC</span>
@@ -66,17 +69,17 @@
             <% } %>
 
             <% if (request.getAttribute("error") != null) { %>
-                <p class="error"><%= request.getAttribute("error") %></p>
+                <p class="error" role="alert" aria-live="assertive"><%= request.getAttribute("error") %></p>
             <% } %>
 
             <form action="login" method="post" class="formulario">
                 <label>
                     Usuario o correo
-                    <input type="text" name="usuario" value="<%= ultimoUsuario %>" placeholder="admin@sistema-clinico.local" required>
+                    <input type="email" name="usuario" value="<%= ultimoUsuario %>" placeholder="admin@sistema-clinico.local" maxlength="120" autocomplete="username" aria-required="true" required>
                 </label>
                 <label>
                     Contrasena
-                    <input type="password" name="clave" placeholder="admin123" required>
+                    <input type="password" name="clave" placeholder="Contraseña" minlength="8" maxlength="128" autocomplete="current-password" aria-required="true" required>
                 </label>
                 <button type="submit">Iniciar sesión</button>
             </form>

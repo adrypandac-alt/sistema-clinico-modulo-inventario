@@ -23,11 +23,44 @@ import com.nexodist.model.Venta;
 import com.nexodist.model.VentaItem;
 import com.nexodist.service.DashboardService;
 import com.nexodist.service.VentaService;
+import com.nexodist.util.DataProtectionUtil;
+import com.nexodist.util.PasswordUtil;
+import com.nexodist.util.RequestValidator;
 
 import jakarta.servlet.ServletContext;
 
 @DisplayName("Pruebas de caja blanca")
 class CajaBlancaTest {
+
+    @Test
+    @DisplayName("validador rechaza enteros manipulados, cero y valores vacios")
+    void validadorRechazaEnterosInvalidos() {
+        assertEquals(5, RequestValidator.enteroPositivo(" 5 ", "Cantidad"));
+        assertThrows(IllegalArgumentException.class, () -> RequestValidator.enteroPositivo("abc", "Cantidad"));
+        assertThrows(IllegalArgumentException.class, () -> RequestValidator.enteroPositivo("0", "Cantidad"));
+        assertThrows(IllegalArgumentException.class, () -> RequestValidator.enteroPositivo(" ", "Cantidad"));
+    }
+
+    @Test
+    @DisplayName("validador conserva documentos como texto y valida nombres internacionales")
+    void validadorDocumentosYNombres() {
+        assertEquals("0999999999", RequestValidator.documento("0999999999", "Cédula"));
+        assertEquals("María-José O'Connor", RequestValidator.nombre("María-José O'Connor", "Nombre", 120));
+        assertThrows(IllegalArgumentException.class, () -> RequestValidator.documento("123", "Cédula"));
+    }
+
+    @Test
+    @DisplayName("datos personales se cifran y contrasenas no quedan en texto plano")
+    void protegeDatosSensibles() {
+        String cifrado = DataProtectionUtil.proteger("usuario@correo.com");
+        assertTrue(cifrado.startsWith("ENC1:"));
+        assertTrue(!cifrado.contains("usuario@correo.com"));
+        assertEquals("usuario@correo.com", DataProtectionUtil.revelar(cifrado));
+
+        String hash = PasswordUtil.hashear("ClaveSegura123");
+        assertTrue(PasswordUtil.esHash(hash));
+        assertTrue(PasswordUtil.verificar("ClaveSegura123", hash));
+    }
 
     @Test
     @DisplayName("registrarMovimiento cubre entradas, salidas, ajustes y ramas invalidas")

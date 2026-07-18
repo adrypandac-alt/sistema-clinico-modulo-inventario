@@ -8,6 +8,7 @@ import com.nexodist.model.Usuario;
 import com.nexodist.model.Venta;
 import com.nexodist.service.DashboardService;
 import com.nexodist.service.VentaService;
+import com.nexodist.util.RequestValidator;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -36,7 +37,8 @@ public class FacturaServlet extends HttpServlet {
                         && seleccionada.getVendedorCorreo().equalsIgnoreCase(usuario.getCorreo())) {
                     req.setAttribute("ventaSeleccionada", seleccionada);
                 }
-            } catch (NumberFormatException ignored) {
+            } catch (IllegalArgumentException e) {
+                req.setAttribute("mensajeError", e.getMessage());
             }
         }
 
@@ -53,7 +55,13 @@ public class FacturaServlet extends HttpServlet {
         Usuario usuario = validarVendedor(req, resp);
         if (usuario == null) return;
 
-        int ventaId = Integer.parseInt(req.getParameter("ventaId"));
+        int ventaId;
+        try {
+            ventaId = RequestValidator.enteroPositivo(req.getParameter("ventaId"), "El identificador de la venta");
+        } catch (IllegalArgumentException e) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            return;
+        }
         Venta venta = VentaService.buscarVenta(getServletContext(), ventaId);
         if (venta != null && venta.getVendedorCorreo().equalsIgnoreCase(usuario.getCorreo())) {
             synchronized (getServletContext()) {

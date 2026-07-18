@@ -18,9 +18,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Productos</title>
     <link rel="stylesheet" href="css/estilos.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <script src="js/accessibility.js"></script>
 </head>
 <body>
-<main class="layout">
+<a class="sc-skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+<main class="layout" id="contenido-principal" tabindex="-1">
     <aside class="sidebar">
         <div class="app-brand"><span class="logo">SC</span><span>Sistema Clínico</span></div>
         <nav class="nav">

@@ -41,6 +41,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Usuarios - Sistema Clínico</title>
     <link rel="stylesheet" href="css/stockcontrol.css">
+    <link rel="stylesheet" href="css/accessibility.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="sc-body">
@@ -131,7 +132,7 @@
                 <tr>
                     <td>
                         <span class="sc-user-table-avatar"><%= u.getIniciales() %></span>
-                        <%= u.getNombre() %><% if (esTu) { %> <span style="color:#6b7a90;font-size:11px;">(tú)</span><% } %>
+                        <%= u.getNombre() %><% if (esTu) { %> <span style="color:#5f7087;font-size:14px;">(tú)</span><% } %>
                     </td>
                     <td><%= u.getCorreo() %></td>
                     <td>
@@ -217,14 +218,14 @@
             <div class="sc-form-group">
                 <label>Contraseña temporal</label>
                 <div class="sc-password-row">
-                    <input type="password" name="clave" minlength="6" required>
+                    <input type="password" name="clave" minlength="8" required>
                     <button type="button" class="sc-btn-sm" onclick="togglePassword(this)">Ver</button>
                 </div>
             </div>
             <div class="sc-form-group">
                 <label>Repetir contraseña</label>
                 <div class="sc-password-row">
-                    <input type="password" name="claveConfirmacion" minlength="6" required>
+                    <input type="password" name="claveConfirmacion" minlength="8" required>
                     <button type="button" class="sc-btn-sm" onclick="togglePassword(this)">Ver</button>
                 </div>
             </div>
@@ -278,14 +279,14 @@
             <div class="sc-form-group">
                 <label>Contraseña</label>
                 <div class="sc-password-row">
-                    <input type="password" name="clave" minlength="6" required>
+                    <input type="password" name="clave" minlength="8" required>
                     <button type="button" class="sc-btn-sm" onclick="togglePassword(this)">Ver</button>
                 </div>
             </div>
             <div class="sc-form-group">
                 <label>Repetir contraseña</label>
                 <div class="sc-password-row">
-                    <input type="password" name="claveConfirmacion" minlength="6" required>
+                    <input type="password" name="claveConfirmacion" minlength="8" required>
                     <button type="button" class="sc-btn-sm" onclick="togglePassword(this)">Ver</button>
                 </div>
             </div>

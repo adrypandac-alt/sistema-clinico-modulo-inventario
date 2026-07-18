@@ -13,11 +13,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ventas médicas - Sistema Clínico</title>
     <link rel="stylesheet" href="css/stockcontrol.css">
+    <link rel="stylesheet" href="css/accessibility.css">
 </head>
 <body class="sc-body">
+<a class="sc-skip-link" href="#contenido-principal">Saltar al contenido principal</a>
 <div class="sc-layout">
     <jsp:include page="includes/admin-sidebar.jsp"/>
-    <main class="sc-main">
+    <main class="sc-main" id="contenido-principal" tabindex="-1">
         <jsp:include page="includes/admin-topbar.jsp"/>
         <div class="sc-page-header">
             <div><h1 class="sc-page-title">Ventas médicas</h1><p class="sc-page-sub">Supervisión de ventas registradas por farmacia</p></div>

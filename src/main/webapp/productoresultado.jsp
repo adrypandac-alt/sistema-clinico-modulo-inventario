@@ -13,9 +13,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Producto registrado</title>
     <link rel="stylesheet" href="css/estilos.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <script src="js/accessibility.js"></script>
 </head>
 <body>
-<main class="contenido">
+<a class="sc-skip-link" href="#contenido-principal">Saltar al contenido principal</a>
+<main class="contenido" id="contenido-principal" tabindex="-1">
     <section class="tarjeta">
         <p class="aviso"><%= mensaje %></p>
         <h1>Producto registrado</h1>

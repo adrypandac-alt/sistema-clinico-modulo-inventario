@@ -23,6 +23,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alertas médicas - Sistema Clínico</title>
     <link rel="stylesheet" href="css/stockcontrol.css">
+    <link rel="stylesheet" href="css/accessibility.css">
 </head>
 <body class="sc-body">
 <div class="sc-layout">
@@ -65,9 +66,9 @@
                         <div class="sc-alert-meta">Registro sanitario: <%= producto.getRegistroSanitario() %> · Ubicación: <%= producto.getUbicacion() %></div>
                     </div>
                     <div class="sc-alert-tags">
-                        <% if (producto.isCaducado()) { %><span class="sc-expiry-badge expired">Caducado hace <%= Math.abs(producto.getDiasParaCaducar()) %> días</span><% } %>
-                        <% if (producto.isProximoCaducar()) { %><span class="sc-expiry-badge soon">Caduca en <%= producto.getDiasParaCaducar() %> días</span><% } %>
-                        <% if (stockBajo) { %><span class="sc-expiry-badge <%= nivel %>">Stock <%= producto.getStock() %> / <%= producto.getStockMinimo() %></span><% } %>
+                        <% if (producto.isCaducado()) { %><span class="sc-expiry-badge expired">✖ Caducado hace <%= Math.abs(producto.getDiasParaCaducar()) %> días</span><% } %>
+                        <% if (producto.isProximoCaducar()) { %><span class="sc-expiry-badge soon">▲ Próximo: caduca en <%= producto.getDiasParaCaducar() %> días</span><% } %>
+                        <% if (stockBajo) { %><span class="sc-expiry-badge <%= nivel %>"><%= producto.esStockCritico() ? "✖ Crítico" : "▲ Bajo" %>: <%= producto.getStock() %> / <%= producto.getStockMinimo() %></span><% } %>
                     </div>
                 </div>
                 <div class="sc-alert-meta sc-expiry-date">Fecha de caducidad: <strong><%= producto.getFechaCaducidad() %></strong></div>
@@ -82,7 +83,7 @@
             <div id="live-recomendaciones">
                 <% if (recomendaciones != null) { for (Map<String,String> rec : recomendaciones) { %>
                 <div class="sc-rec-item <%= rec.get("nivel") %>">
-                    <div class="sc-rec-title"><%= rec.get("titulo") %> <span style="color:#4b5563;font-size:11px;font-weight:400;margin-left:6px;"><%= rec.get("ref") %></span></div>
+                    <div class="sc-rec-title"><%= rec.get("titulo") %> <span style="color:#4b5563;font-size:14px;font-weight:500;margin-left:6px;"><%= rec.get("ref") %></span></div>
                     <div class="sc-rec-text"><%= rec.get("texto") %></div>
                 </div>
                 <% } } %>

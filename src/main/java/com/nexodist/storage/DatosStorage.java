@@ -18,7 +18,17 @@ import com.nexodist.model.Rol;
 import com.nexodist.model.Usuario;
 import com.nexodist.model.Venta;
 import com.nexodist.model.VentaItem;
+import com.nexodist.util.DataProtectionUtil;
+import com.nexodist.util.PasswordUtil;
 
+/**
+ * En esta clase concentro el acceso JDBC y la inicialización del esquema MySQL.
+ *
+ * Cumplo la función de gateway de persistencia de la aplicación monolítica y
+ * me comunico con modelos, servicios y listener de arranque. Si esta clase
+ * falla, el sistema conserva parte del estado en memoria, pero no puede
+ * garantizar persistencia ni trazabilidad después de reiniciar.
+ */
 public class DatosStorage {
 
     public static List<Rol> cargarRoles() {
@@ -191,13 +201,13 @@ public class DatosStorage {
         try (Connection cn = abrirConexion(); PreparedStatement ps = cn.prepareStatement(sql)) {
             for (Usuario u : usuarios) {
                 int rolId = asegurarRol(cn, normalizarRolParaDb(u.getRol()));
-                ps.setString(1, u.getCorreo());
+                ps.setString(1, DataProtectionUtil.proteger(u.getCorreo().trim().toLowerCase()));
                 ps.setInt(2, rolId);
-                ps.setString(3, u.getClave());
-                ps.setString(4, u.getNombre());
+                ps.setString(3, PasswordUtil.hashearSiNecesario(u.getClave()));
+                ps.setString(4, DataProtectionUtil.proteger(u.getNombre().trim()));
                 ps.setBoolean(5, u.isActivo());
                 ps.setString(6, u.getPanelesPermitidos());
-                ps.setString(7, u.getTelefono());
+                ps.setString(7, DataProtectionUtil.proteger(u.getTelefono()));
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
@@ -209,6 +219,7 @@ public class DatosStorage {
         List<Usuario> lista = new ArrayList<>();
         asegurarColumnaPanelesUsuario();
         asegurarColumnaTelefonoUsuario();
+        migrarUsuariosCifrados();
         String sql = "SELECT u.nombre, u.email, u.password, r.nombre AS rol, u.activo, u.fecha_creacion, u.paneles_permitidos, u.telefono "
                 + "FROM usuario u JOIN rol r ON r.id_rol = u.id_rol ORDER BY u.nombre";
         try (Connection cn = abrirConexion();
@@ -217,21 +228,46 @@ public class DatosStorage {
             while (rs.next()) {
                 String rol = normalizarRolParaApp(rs.getString("rol"));
                 Usuario cargado = new Usuario(
-                        rs.getString("nombre"),
-                        rs.getString("email"),
+                        DataProtectionUtil.revelar(rs.getString("nombre")),
+                        DataProtectionUtil.revelar(rs.getString("email")),
                         rs.getString("password"),
                         rol,
                         areaPorRol(rol),
                         rs.getBoolean("activo"),
                         rs.getTimestamp("fecha_creacion") == null ? "Sin accesos" : "Registrado",
                         rs.getString("paneles_permitidos"));
-                cargado.setTelefono(rs.getString("telefono"));
+                cargado.setTelefono(DataProtectionUtil.revelar(rs.getString("telefono")));
                 lista.add(cargado);
             }
         } catch (SQLException e) {
             registrarError("cargar usuarios", e);
         }
         return lista;
+    }
+
+    /** Migra en el mismo registro los datos personales legados en texto plano. */
+    private static void migrarUsuariosCifrados() {
+        String consulta = "SELECT id_usuario, email, nombre, telefono FROM usuario";
+        String actualizacion = "UPDATE usuario SET email=?, nombre=?, telefono=? WHERE id_usuario=?";
+        try (Connection cn = abrirConexion();
+             PreparedStatement leer = cn.prepareStatement(consulta);
+             ResultSet rs = leer.executeQuery();
+             PreparedStatement guardar = cn.prepareStatement(actualizacion)) {
+            while (rs.next()) {
+                String email = rs.getString("email");
+                String nombre = rs.getString("nombre");
+                String telefono = rs.getString("telefono");
+                if ((email != null && !email.startsWith("ENC1:"))
+                        || (nombre != null && !nombre.startsWith("ENC1:"))
+                        || (telefono != null && !telefono.isBlank() && !telefono.startsWith("ENC1:"))) {
+                    guardar.setString(1, DataProtectionUtil.proteger(email == null ? "" : email.trim().toLowerCase()));
+                    guardar.setString(2, DataProtectionUtil.proteger(nombre));
+                    guardar.setString(3, DataProtectionUtil.proteger(telefono));
+                    guardar.setInt(4, rs.getInt("id_usuario"));
+                    guardar.executeUpdate();
+                }
+            }
+        } catch (SQLException e) { registrarError("migrar cifrado de usuarios", e); }
     }
 
     public static void guardarMovimientos(List<Movimiento> movimientos) {
@@ -507,7 +543,8 @@ public class DatosStorage {
             // instalaciones existentes para mantener el esquema actualizado.
             st.executeUpdate("DROP TABLE IF EXISTS rol_modulo");
             st.executeUpdate("DROP TABLE IF EXISTS modulo");
-            st.executeUpdate("CREATE TABLE IF NOT EXISTS usuario (id_usuario INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(120) NOT NULL UNIQUE, id_rol INT NOT NULL, password VARCHAR(255) NOT NULL, nombre VARCHAR(100) NOT NULL, activo BOOLEAN NOT NULL DEFAULT TRUE, fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (id_rol) REFERENCES rol(id_rol) ON DELETE RESTRICT) ENGINE=InnoDB");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS usuario (id_usuario INT AUTO_INCREMENT PRIMARY KEY, email VARCHAR(512) NOT NULL UNIQUE, id_rol INT NOT NULL, password VARCHAR(255) NOT NULL, nombre VARCHAR(512) NOT NULL, activo BOOLEAN NOT NULL DEFAULT TRUE, fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (id_rol) REFERENCES rol(id_rol) ON DELETE RESTRICT) ENGINE=InnoDB");
+            st.executeUpdate("ALTER TABLE usuario MODIFY email VARCHAR(512) NOT NULL, MODIFY nombre VARCHAR(512) NOT NULL, MODIFY password VARCHAR(255) NOT NULL, MODIFY telefono VARCHAR(255) NULL");
             asegurarColumnaPanelesUsuario(cn);
             st.executeUpdate("CREATE TABLE IF NOT EXISTS proveedor (id_proveedor INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(120) NOT NULL, contacto VARCHAR(100), telefono VARCHAR(20), email VARCHAR(120), direccion VARCHAR(200), activo BOOLEAN NOT NULL DEFAULT TRUE) ENGINE=InnoDB");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS categoria_producto (id_categoria INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(100) NOT NULL UNIQUE, descripcion VARCHAR(200), activo BOOLEAN NOT NULL DEFAULT TRUE) ENGINE=InnoDB");
@@ -619,10 +656,10 @@ public class DatosStorage {
 
     private static void insertarUsuarioSiNoExiste(Connection cn, String email, String clave, String nombre, String rol) throws SQLException {
         try (PreparedStatement ps = cn.prepareStatement("INSERT IGNORE INTO usuario (email, id_rol, password, nombre) VALUES (?, ?, ?, ?)")) {
-            ps.setString(1, email);
+            ps.setString(1, DataProtectionUtil.proteger(email.trim().toLowerCase()));
             ps.setInt(2, asegurarRol(cn, rol));
-            ps.setString(3, clave);
-            ps.setString(4, nombre);
+            ps.setString(3, PasswordUtil.hashearSiNecesario(clave));
+            ps.setString(4, DataProtectionUtil.proteger(nombre));
             ps.executeUpdate();
         }
     }
@@ -654,14 +691,15 @@ public class DatosStorage {
         int corte = dato.indexOf(" (");
         if (corte > 0) dato = dato.substring(0, corte);
         try (PreparedStatement ps = cn.prepareStatement("SELECT id_usuario FROM usuario WHERE email = ? OR nombre = ? LIMIT 1")) {
-            ps.setString(1, dato);
-            ps.setString(2, dato);
+            ps.setString(1, DataProtectionUtil.proteger(dato.toLowerCase()));
+            ps.setString(2, DataProtectionUtil.proteger(dato));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
             }
         }
         insertarUsuarioSiNoExiste(cn, "admin@ase.com", "admin123", "Administrador ASE", "Administrador");
-        return buscarId(cn, "SELECT id_usuario FROM usuario WHERE email = ?", "admin@ase.com");
+        return buscarId(cn, "SELECT id_usuario FROM usuario WHERE email = ?",
+                DataProtectionUtil.proteger("admin@ase.com"));
     }
 
     private static boolean existeProducto(Connection cn, int id) throws SQLException {

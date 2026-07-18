@@ -13,6 +13,7 @@ import com.nexodist.model.Producto;
 import com.nexodist.model.Usuario;
 import com.nexodist.service.DashboardService;
 import com.nexodist.storage.DatosStorage;
+import com.nexodist.util.RequestValidator;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,6 +23,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/pedidos")
+/**
+ * En este controlador gestiono el carrito de pedidos y el flujo de despacho.
+ *
+ * Compruebo productos, cantidades, estados, receptor, stock y permisos. También
+ * registro movimientos para conservar trazabilidad. Si fallo, un pedido podría
+ * quedar sin despachar o sin el movimiento que explica la salida de inventario.
+ */
 public class PedidoServlet extends HttpServlet {
     private static final String CARRITO_PEDIDO = "pedidoCarrito";
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -100,8 +108,14 @@ public class PedidoServlet extends HttpServlet {
 
     @SuppressWarnings("unchecked")
     private void agregarItem(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        int productoId = Integer.parseInt(req.getParameter("id"));
-        int cantidad = Integer.parseInt(req.getParameter("cantidadPedido"));
+        int productoId;
+        int cantidad;
+        try {
+            productoId = RequestValidator.enteroPositivo(req.getParameter("id"), "El producto");
+            cantidad = RequestValidator.enteroPositivo(req.getParameter("cantidadPedido"), "La cantidad solicitada");
+        } catch (IllegalArgumentException e) {
+            resp.sendRedirect("pedidos?error=producto"); return;
+        }
         String observacion = limpiar(req.getParameter("observacionPedido"));
         String nombres = limpiar(req.getParameter("nombresSolicitante"));
         String apellidos = limpiar(req.getParameter("apellidosSolicitante"));
@@ -130,7 +144,12 @@ public class PedidoServlet extends HttpServlet {
     }
 
     private void quitarItem(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        int productoId = Integer.parseInt(req.getParameter("id"));
+        int productoId;
+        try {
+            productoId = RequestValidator.enteroPositivo(req.getParameter("id"), "El producto");
+        } catch (IllegalArgumentException e) {
+            resp.sendRedirect("pedidos?error=producto"); return;
+        }
         List<PedidoItem> carrito = obtenerCarrito(req.getSession());
         carrito.removeIf(item -> item.getProductoId() == productoId);
         resp.sendRedirect("pedidos?carrito=1");
@@ -176,7 +195,8 @@ public class PedidoServlet extends HttpServlet {
     @SuppressWarnings("unchecked")
     private void cambiarEstadoDespacho(HttpServletRequest req, HttpServletResponse resp, Usuario usuario, boolean completar) throws IOException {
         int id;
-        try { id = Integer.parseInt(req.getParameter("id")); } catch (Exception e) { resp.sendRedirect("pedidos?error=pedido"); return; }
+        try { id = RequestValidator.enteroPositivo(req.getParameter("id"), "El pedido"); }
+        catch (IllegalArgumentException e) { resp.sendRedirect("pedidos?error=pedido"); return; }
         synchronized (getServletContext()) {
             Pedido pedido = obtenerPedidos().stream().filter(p -> p.getId() == id).findFirst().orElse(null);
             if (pedido == null) { resp.sendRedirect("pedidos?error=pedido"); return; }

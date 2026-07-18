@@ -21,6 +21,13 @@ import jakarta.servlet.http.HttpSessionEvent;
 import jakarta.servlet.http.HttpSessionListener;
 
 @WebListener
+/**
+ * En este listener preparo el estado compartido cuando arranca la aplicación.
+ *
+ * Cargo MySQL, migro datos compatibles y publico listas en ServletContext para
+ * servlets y servicios. Si esta inicialización falla, las pantallas podrían
+ * trabajar únicamente con datos de demostración o quedar sin catálogos.
+ */
 public class AppContextListener implements ServletContextListener, HttpSessionListener {
 
     public static final String ATRIBUTO_VISITAS = "visitas";

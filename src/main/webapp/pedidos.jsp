@@ -31,6 +31,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pedidos - Sistema Clínico</title>
     <link rel="stylesheet" href="css/stockcontrol.css">
+    <link rel="stylesheet" href="css/accessibility.css">
 </head>
 <body class="sc-body">
 <div class="sc-layout">

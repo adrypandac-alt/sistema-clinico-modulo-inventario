@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.nexodist.util.DataProtectionUtil;
+
 /**
  * Capa de persistencia para las tablas de seguridad:
  *   - intentos_login      (auditoría de logins y bloqueo por fuerza bruta)
@@ -25,7 +27,7 @@ public final class SeguridadStorage {
     private static final Logger LOG = Logger.getLogger(SeguridadStorage.class.getName());
 
     /** Minutos de ventana para contar intentos fallidos. */
-    public static final int VENTANA_INTENTOS_MINUTOS = 15;
+    public static final int VENTANA_INTENTOS_MINUTOS = 3;
 
     /** Máximo de intentos fallidos antes de bloquear. */
     public static final int MAX_INTENTOS_FALLIDOS = 5;
@@ -56,7 +58,7 @@ public final class SeguridadStorage {
             st.executeUpdate(
                 "CREATE TABLE IF NOT EXISTS intentos_login (" +
                 "  id_intento   INT AUTO_INCREMENT PRIMARY KEY," +
-                "  correo       VARCHAR(120) NOT NULL," +
+                "  correo       VARCHAR(512) NOT NULL," +
                 "  ip           VARCHAR(45)  NOT NULL," +
                 "  fecha        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP," +
                 "  exitoso      BOOLEAN      NOT NULL DEFAULT FALSE," +
@@ -65,6 +67,7 @@ public final class SeguridadStorage {
                 "  INDEX idx_intentos_ip     (ip)," +
                 "  INDEX idx_intentos_fecha  (fecha)" +
                 ") ENGINE=InnoDB COMMENT='Auditoria de intentos de inicio de sesion'");
+            st.executeUpdate("ALTER TABLE intentos_login MODIFY correo VARCHAR(512) NOT NULL");
 
             st.executeUpdate(
                 "CREATE TABLE IF NOT EXISTS sesion_usuario (" +
@@ -118,7 +121,7 @@ public final class SeguridadStorage {
         String sql = "INSERT INTO intentos_login (correo, ip, agente, exitoso) VALUES (?, ?, ?, ?)";
         try (Connection cn = DatosStorage.abrirConexionPublica();
              PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, correo != null ? correo : "desconocido");
+            ps.setString(1, DataProtectionUtil.proteger(correo != null ? correo : "desconocido"));
             ps.setString(2, ip != null ? ip : "0.0.0.0");
             ps.setString(3, agente != null && agente.length() > 255 ? agente.substring(0, 255) : agente);
             ps.setBoolean(4, exitoso);
@@ -146,7 +149,7 @@ public final class SeguridadStorage {
              PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setInt(1, VENTANA_INTENTOS_MINUTOS);
             ps.setString(2, ip != null ? ip : "0.0.0.0");
-            ps.setString(3, correo != null ? correo : "");
+            ps.setString(3, DataProtectionUtil.proteger(correo != null ? correo : ""));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
             }

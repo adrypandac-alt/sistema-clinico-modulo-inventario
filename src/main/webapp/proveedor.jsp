@@ -20,6 +20,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proveedores - Sistema Clínico</title>
     <link rel="stylesheet" href="css/stockcontrol.css">
+    <link rel="stylesheet" href="css/accessibility.css">
 </head>
 <body class="sc-body">
 <div class="sc-layout">
@@ -99,12 +100,12 @@
         <h3 id="modal-proveedor-titulo">Nuevo proveedor</h3>
         <form action="proveedor" method="post" id="form-proveedor">
             <input type="hidden" name="accion" value="crear">
-            <div class="sc-form-group"><label>RUC</label><input type="text" name="ruc" maxlength="13" pattern="[0-9]{10,13}" required></div>
-            <div class="sc-form-group"><label>Nombre del proveedor</label><input type="text" name="nombre" required></div>
-            <div class="sc-form-group"><label>Persona de contacto</label><input type="text" name="contacto" required></div>
-            <div class="sc-form-group"><label>Teléfono</label><input type="text" name="telefono" maxlength="10" pattern="[0-9]{7,10}" required></div>
-            <div class="sc-form-group"><label>Correo electrónico</label><input type="email" name="correo" required></div>
-            <div class="sc-form-group"><label>Dirección opcional</label><input type="text" name="direccion"></div>
+            <div class="sc-form-group"><label>RUC</label><input type="text" name="ruc" minlength="10" maxlength="13" inputmode="numeric" pattern="[0-9]{10}|[0-9]{13}" autocomplete="off" required></div>
+            <div class="sc-form-group"><label>Nombre del proveedor</label><input type="text" name="nombre" maxlength="120" autocomplete="organization" required></div>
+            <div class="sc-form-group"><label>Persona de contacto</label><input type="text" name="contacto" maxlength="100" autocomplete="name" required></div>
+            <div class="sc-form-group"><label>Teléfono</label><input type="tel" name="telefono" maxlength="10" inputmode="tel" pattern="[0-9]{7,10}" autocomplete="tel" required></div>
+            <div class="sc-form-group"><label>Correo electrónico</label><input type="email" name="correo" maxlength="120" autocomplete="email" required></div>
+            <div class="sc-form-group"><label>Dirección opcional</label><input type="text" name="direccion" maxlength="200" autocomplete="street-address"></div>
             <div class="sc-form-group">
                 <label>Estado</label>
                 <select name="estado">
@@ -112,7 +113,7 @@
                     <option value="Inactivo">Inactivo</option>
                 </select>
             </div>
-            <div class="sc-form-group"><label>Observaciones</label><textarea name="observaciones" rows="3"></textarea></div>
+            <div class="sc-form-group"><label>Observaciones</label><textarea name="observaciones" rows="3" maxlength="250"></textarea></div>
             <div class="sc-form-actions">
                 <button type="submit" class="sc-btn-primary">Guardar</button>
                 <button type="button" class="sc-btn-sm" onclick="document.getElementById('modal-proveedor').classList.add('sc-hidden')">Cancelar</button>
@@ -155,6 +156,7 @@ function filtrarProveedores() {
     });
 }
 </script>
+<script src="js/dashboard.js"></script>
 </body>
 </html>
 

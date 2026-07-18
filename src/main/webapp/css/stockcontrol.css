@@ -3656,3 +3656,47 @@ body{overflow-x:hidden}
 .sc-db-online span { background:#20bd7a; }
 .sc-db-offline { color:#a52b35; background:#ffe2e5; }
 .sc-db-offline span { background:#ef5965; }
+/* RNF-09: accesibilidad, teclado, contraste y reducción de movimiento */
+.sc-skip-link {
+  position: fixed; left: 1rem; top: -5rem; z-index: 99999;
+  padding: .85rem 1.2rem; background: #fff; color: #10233f;
+  border: 3px solid #1b66c9; border-radius: .5rem; font-weight: 800;
+}
+.sc-skip-link:focus { top: 1rem; }
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #ffbf47 !important; outline-offset: 3px !important;
+  box-shadow: 0 0 0 5px rgba(16, 35, 63, .85) !important;
+}
+button, .sc-btn-primary, .sc-btn-sm, .sc-action-btn, .sc-nav a { min-height: 44px; }
+input, select, textarea { min-height: 44px; }
+.sc-sr-only {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important; overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important;
+}
+.sc-error-box, .sc-success-box, [role="alert"], [role="status"] { border-width: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  button, a, input, select, textarea { border: 1px solid ButtonText; }
+}
+/* Separación visual de la sección de auditoría en el menú lateral */
+.sc-nav-section-divider {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin: .8rem .75rem .35rem;
+  color: rgba(255, 255, 255, .9);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.sc-nav-section-divider::before,
+.sc-nav-section-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: rgba(255, 255, 255, .48);
+}

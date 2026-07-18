@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <nav class="sc-nav">
+    <nav class="sc-nav" aria-label="Navegación principal">
         <a href="inicio">
             <span class="sc-nav-icon">⌂</span> Inicio
         </a>
@@ -66,6 +66,9 @@
         </a>
         <% } %>
         <% if (verUsuarios) { %>
+        <div class="sc-nav-section-divider" role="separator" aria-label="Auditoría">
+            <span>Auditoría</span>
+        </div>
         <a href="usuarios" class="<%= "usuarios".equals(scPagina) ? "activo" : "" %>">
             <span class="sc-nav-icon">👥</span> Usuarios
         </a>

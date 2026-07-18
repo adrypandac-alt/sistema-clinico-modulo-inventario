@@ -98,6 +98,9 @@ public class UsuariosServlet extends HttpServlet {
                     resp.sendRedirect("usuarios?error=clavecorta");
                     return;
                 }
+                if (!correoValido(correo) || limpiarTelefono(req.getParameter("telefono")).isBlank()) {
+                    resp.sendRedirect("usuarios?error=campos"); return;
+                }
                 boolean existe = usuarios.stream()
                         .anyMatch(u -> u.getCorreo().equalsIgnoreCase(correo.trim()));
                 if (existe) {
@@ -140,6 +143,9 @@ public class UsuariosServlet extends HttpServlet {
                     resp.sendRedirect("usuarios?error=campos");
                     return;
                 }
+                if (!correoValido(nuevoCorreo) || limpiarTelefono(req.getParameter("telefono")).isBlank()) {
+                    resp.sendRedirect("usuarios?error=campos"); return;
+                }
 
                 boolean correoDuplicado = usuarios.stream()
                         .anyMatch(u -> !u.getCorreo().equalsIgnoreCase(correoOriginal.trim())
@@ -155,7 +161,10 @@ public class UsuariosServlet extends HttpServlet {
                         u.setNombre(nombre.trim());
                         u.setTelefono(limpiarTelefono(req.getParameter("telefono")));
                         u.setCorreo(nuevoCorreo.trim());
-                        u.setClave(clave.trim());
+                        if (!PasswordUtil.esHash(clave) && clave.length() < PasswordUtil.LONGITUD_MINIMA) {
+                            resp.sendRedirect("usuarios?error=clavecorta"); return;
+                        }
+                        u.setClave(PasswordUtil.hashearSiNecesario(clave.trim()));
                         u.setRol(rol);
                         u.setArea(normalizarArea(area, rol));
                         u.setPanelesPermitidos(paneles);
@@ -314,6 +323,11 @@ public class UsuariosServlet extends HttpServlet {
         if (telefono == null) return "";
         String valor = telefono.replaceAll("[^0-9+() -]", "").trim();
         return valor.length() > 25 ? valor.substring(0, 25) : valor;
+    }
+
+    private boolean correoValido(String correo) {
+        return correo != null && correo.trim().length() <= 120
+                && correo.trim().matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     }
 
     private Usuario validarAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {

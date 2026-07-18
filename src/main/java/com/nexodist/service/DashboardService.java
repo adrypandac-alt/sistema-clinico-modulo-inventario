@@ -17,6 +17,13 @@ import com.nexodist.model.Usuario;
 
 import jakarta.servlet.ServletContext;
 
+/**
+ * En esta clase aplico reglas compartidas del inventario y preparo indicadores.
+ *
+ * Calculo alertas, caducidad, movimientos, permisos y datos del dashboard. Me
+ * comunico con los modelos almacenados en ServletContext. Si fallo, las vistas
+ * pierden sus indicadores y no pueden actualizar stock de forma coherente.
+ */
 public final class DashboardService {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -401,6 +408,7 @@ public final class DashboardService {
             if (puedeVerPanel(usuario, "alertas-venta")) return "alertas-venta";
             if (puedeVerPanel(usuario, "factura")) return "factura";
         }
-        return "inventario";
+        // Destino predeterminado del sistema después de iniciar sesión.
+        return "panel";
     }
 }
